@@ -7,6 +7,9 @@ type RouteContext = {
   }
 }
 
+export const runtime = 'nodejs'; 
+
+
 export async function POST(req: NextRequest, context: RouteContext) {
   const reseñaId = parseInt(context.params.id);
 

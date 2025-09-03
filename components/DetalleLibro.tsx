@@ -1,4 +1,4 @@
-'use client';
+'use client'; 
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -7,7 +7,6 @@ import ListaReseñas from './ListaReseñas';
 import { Libro } from '../types/libro';
 import { ReseñaConVotos } from '../types/reseña';
 import Image from 'next/image';
-
 
 function DetalleLibro({ libro }: { libro: Libro }) {
   const router = useRouter();
@@ -29,26 +28,21 @@ function DetalleLibro({ libro }: { libro: Libro }) {
     fetchReseñas();
   }, [libro.id]);
 
-  // Resto del código igual...
-
-  // Mejor imagen disponible 
   const portada = (() => {
-  const links = info?.imageLinks;
-  if (!links) return '/default.png';
+    const links = info?.imageLinks;
+    if (!links) return '/default.png';
 
-  const url =
-    links.extraLarge ||
-    links.large ||
-    links.medium ||
-    links.thumbnail;
+    const url =
+      links.extraLarge ||
+      links.large ||
+      links.medium ||
+      links.thumbnail;
 
-  if (!url) return '/default.png';
+    if (!url) return '/default.png';
 
-  return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
-})();
+    return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
+  })();
 
-
-  // Calculo promedio de calificaciones
   const promedioCalificaciones =
     reseñas.length > 0
       ? reseñas.reduce((acc, r) => acc + r.calificacion, 0) / reseñas.length
@@ -72,14 +66,15 @@ function DetalleLibro({ libro }: { libro: Libro }) {
           <Image
             src={portada}
             alt={info.title || 'Sin título'}
-            className="w-64 lg:w-72 h-auto object-cover"
+            width={300}      
+            height={400}     
+            className="object-cover"
           />
         </div>
 
         {/* Información principal */}
         <div className="flex-1 space-y-4">
           <h1 className="text-4xl font-bold">{info.title}</h1>
-
           {/* Promedio de estrellas */}
           <div className="flex items-center space-x-1">
             {Array.from({ length: Math.round(promedioCalificaciones) }).map((_, i) => (

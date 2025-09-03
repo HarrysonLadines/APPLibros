@@ -20,11 +20,13 @@ export default function TarjetaLibro({ libro }: { libro: Libro }) {
   return (
     <Link href={`/libro/${libro.id}`}>
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer">
-        <div className="w-full h-60 sm:h-72 overflow-hidden">
+        <div className="w-full h-60 sm:h-72 relative">
           <Image
             src={imagenSegura}
             alt={titulo}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            fill
+            style={{ objectFit: 'cover' }}
+            className="transition-transform duration-300 hover:scale-105"
           />
         </div>
         <div className="p-2">
