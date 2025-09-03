@@ -1,16 +1,15 @@
-'use client';
+import { ReseñaConVotos } from '../types/reseña';
 
 interface ListaReseñasProps {
   libroId: string;
-  reseñas?: any[];
-  setReseñas?: React.Dispatch<React.SetStateAction<any[]>>;
+  reseñas?: ReseñaConVotos[];
+  setReseñas?: React.Dispatch<React.SetStateAction<ReseñaConVotos[]>>;
 }
 
 export default function ListaReseñas({ libroId, reseñas = [], setReseñas }: ListaReseñasProps) {
   const votar = async (id: number, tipo: 'UP' | 'DOWN') => {
     if (!setReseñas) return;
 
-    // Actualización inmediata en UI
     setReseñas(prev =>
       prev.map(r =>
         r.id === id
@@ -46,17 +45,17 @@ export default function ListaReseñas({ libroId, reseñas = [], setReseñas }: L
                 onClick={() => votar(r.id, 'UP')}
                 className="text-green-400 hover:text-green-500"
               >
-                👍 {r.likes || 0}
+                👍 {r.likes}
               </button>
               <button
                 onClick={() => votar(r.id, 'DOWN')}
                 className="text-red-400 hover:text-red-500"
               >
-                👎 {r.dislikes || 0}
+                👎 {r.dislikes}
               </button>
             </div>
           </div>
-          <p className="text-gray-200">{r.contenido || r.texto}</p>
+          <p className="text-gray-200">{r.contenido}</p>
         </div>
       ))}
     </div>

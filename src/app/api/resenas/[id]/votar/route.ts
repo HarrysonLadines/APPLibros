@@ -26,8 +26,12 @@ export async function POST(
     });
 
     return NextResponse.json(voto);
-  } catch (error: any) {
-    console.error('Error al votar:', error.message);
-    return NextResponse.json({ error: 'Error al registrar voto' }, { status: 500 });
-  }
+  } catch (error: unknown) {
+  console.error('Error al votar:', error);
+
+  const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+
+  return NextResponse.json({ error: mensaje }, { status: 500 });
+}
+
 }

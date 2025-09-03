@@ -1,9 +1,11 @@
 "use client";
+
 import React, { useState } from "react";
+import { ReseñaConVotos } from "../types/reseña"; 
 
 interface ReseñaFormProps {
   libroId: string;
-  onNuevaReseña: (reseña: any) => void;
+  onNuevaReseña: (reseña: ReseñaConVotos) => void;
 }
 
 export default function ReseñaForm({ libroId, onNuevaReseña }: ReseñaFormProps) {
@@ -15,41 +17,30 @@ export default function ReseñaForm({ libroId, onNuevaReseña }: ReseñaFormProp
     e.preventDefault();
     if (!texto.trim() || calificacion === 0) return;
 
-        const nuevaReseña = {
-      libroId,
-      contenido: texto, 
-      calificacion,
-      likes: 0,
-      dislikes: 0,
-      fecha: new Date().toISOString(),
-    };
-
-    onNuevaReseña(nuevaReseña);
-
     try {
       setLoading(true);
-            const res = await fetch(`/api/resenas?libroId=${libroId}`, {
+
+      const res = await fetch(`/api/resenas?libroId=${libroId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contenido: texto, 
+          contenido: texto,
           calificacion,
         }),
       });
 
+      if (!res.ok) throw new Error("Error al guardar en BD");
 
-      if (!res.ok) {
-        throw new Error("Error al guardar en BD");
-      }
+      const reseñaCreada: ReseñaConVotos = await res.json();
 
-      console.log("Reseña guardada en BD");
+      onNuevaReseña(reseñaCreada);
+      setTexto("");
+      setCalificacion(0);
     } catch (err) {
       console.error(err);
       alert("No se pudo guardar la reseña en la base de datos");
     } finally {
       setLoading(false);
-      setTexto("");
-      setCalificacion(0);
     }
   };
 

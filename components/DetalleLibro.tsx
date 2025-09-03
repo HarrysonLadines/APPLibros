@@ -4,21 +4,23 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ReseñaForm from './ReseñaForm';
 import ListaReseñas from './ListaReseñas';
+import { Libro } from '../types/libro';
+import { ReseñaConVotos } from '../types/reseña';
+import Image from 'next/image';
 
-function DetalleLibro({ libro }: { libro: any }) {
+
+function DetalleLibro({ libro }: { libro: Libro }) {
   const router = useRouter();
   const info = libro.volumeInfo;
 
-  // Estado local de reseñas
-  const [reseñas, setReseñas] = useState<any[]>([]);
+  const [reseñas, setReseñas] = useState<ReseñaConVotos[]>([]);
 
-  // Cargar reseñas desde la API
   useEffect(() => {
     async function fetchReseñas() {
       try {
         const res = await fetch(`/api/resenas?libroId=${libro.id}`);
         if (!res.ok) throw new Error("Error al traer reseñas");
-        const data = await res.json();
+        const data: ReseñaConVotos[] = await res.json();
         setReseñas(data);
       } catch (err) {
         console.error(err);
@@ -27,17 +29,24 @@ function DetalleLibro({ libro }: { libro: any }) {
     fetchReseñas();
   }, [libro.id]);
 
+  // Resto del código igual...
+
   // Mejor imagen disponible 
   const portada = (() => {
-    const links = info?.imageLinks;
-    if (!links) return '/default.png';
-    const url =
-      links.extraLarge ||
-      links.large ||
-      links.medium ||
-      links.thumbnail;
-    return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
-  })();
+  const links = info?.imageLinks;
+  if (!links) return '/default.png';
+
+  const url =
+    links.extraLarge ||
+    links.large ||
+    links.medium ||
+    links.thumbnail;
+
+  if (!url) return '/default.png';
+
+  return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
+})();
+
 
   // Calculo promedio de calificaciones
   const promedioCalificaciones =
@@ -60,7 +69,7 @@ function DetalleLibro({ libro }: { libro: any }) {
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
         {/* Portada */}
         <div className="flex-shrink-0 rounded-lg overflow-hidden shadow-lg border border-gray-700">
-          <img
+          <Image
             src={portada}
             alt={info.title || 'Sin título'}
             className="w-64 lg:w-72 h-auto object-cover"

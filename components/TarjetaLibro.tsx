@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { Libro } from '../types/libro';
+import Image from 'next/image';
 
-export default function TarjetaLibro({ libro }: { libro: any }) {
+export default function TarjetaLibro({ libro }: { libro: Libro }) {
   const info = libro.volumeInfo;
 
   // Escoger la mejor imagen disponible
@@ -19,7 +21,7 @@ export default function TarjetaLibro({ libro }: { libro: any }) {
     <Link href={`/libro/${libro.id}`}>
       <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer">
         <div className="w-full h-60 sm:h-72 overflow-hidden">
-          <img
+          <Image
             src={imagenSegura}
             alt={titulo}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
