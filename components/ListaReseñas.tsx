@@ -7,6 +7,9 @@ interface ListaReseñasProps {
 }
 
 export default function ListaReseñas({ libroId, reseñas = [], setReseñas }: ListaReseñasProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _libroId = libroId; 
+
   const votar = async (id: number, tipo: 'UP' | 'DOWN') => {
     if (!setReseñas) return;
 
@@ -28,8 +31,9 @@ export default function ListaReseñas({ libroId, reseñas = [], setReseñas }: L
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo }),
       });
-    } catch (err) {
-      console.error('Error al registrar voto:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Error al registrar voto:', message);
     }
   };
 

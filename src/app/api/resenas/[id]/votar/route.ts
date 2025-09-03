@@ -1,11 +1,14 @@
 import { prisma } from '@/app/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } } 
-) {
-    const reseñaId = parseInt(params.id);
+type RouteContext = {
+  params: {
+    id: string
+  }
+}
+
+export async function POST(req: NextRequest, context: RouteContext) {
+  const reseñaId = parseInt(context.params.id);
 
   if (!reseñaId) {
     return NextResponse.json({ error: 'Falta reseñaId' }, { status: 400 });
@@ -27,11 +30,8 @@ export async function POST(
 
     return NextResponse.json(voto);
   } catch (error: unknown) {
-  console.error('Error al votar:', error);
-
-  const mensaje = error instanceof Error ? error.message : 'Error desconocido';
-
-  return NextResponse.json({ error: mensaje }, { status: 500 });
-}
-
+    console.error('Error al votar:', error);
+    const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json({ error: mensaje }, { status: 500 });
+  }
 }

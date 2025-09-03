@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 
-export async function POST(req: NextRequest, context: { params: { id: string } }) {
-  const reseñaIdStr = context.params.id;
-  const reseñaId = parseInt(reseñaIdStr);
+type VotarContext = { params: { id: string } };
 
-  if (!reseñaId) {
-    return NextResponse.json({ error: 'Falta reseñaId' }, { status: 400 });
+export async function POST(req: NextRequest, context: VotarContext) {
+  const { params } = context;
+
+  const reseñaId = parseInt(params.id, 10);
+  if (isNaN(reseñaId)) {
+    return NextResponse.json({ error: 'Falta reseñaId válido' }, { status: 400 });
   }
 
   const body = await req.json();
-  const { tipo } = body;
+  const { tipo } = body as { tipo: 'UP' | 'DOWN' };
 
   if (!['UP', 'DOWN'].includes(tipo)) {
     return NextResponse.json({ error: 'Tipo de voto inválido' }, { status: 400 });
@@ -24,8 +26,13 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
       },
     });
     return NextResponse.json(voto);
-  } catch (error: any) {
-    console.error('Error al votar:', error.message);
-    return NextResponse.json({ error: 'Error al registrar voto' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Error al votar:', error);
+    const message =
+      error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json(
+      { error: `Error al registrar voto: ${message}` },
+      { status: 500 }
+    );
   }
 }
