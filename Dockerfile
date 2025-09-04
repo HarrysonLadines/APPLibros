@@ -2,14 +2,18 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar package.json y package-lock.json para instalar dependencias
+# Copiar y preparar dependencias
 COPY package*.json ./
-
-# Instalar todas las dependencias necesarias para build
 RUN npm install
+
+# Copiar el esquema de Prisma
+COPY prisma ./prisma
 
 # Copiar todo el proyecto
 COPY . .
+
+# Generar el cliente de Prisma antes de build
+RUN npx prisma generate
 
 # Crear el build de Next.js
 RUN npm run build
@@ -18,20 +22,18 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Copiar solo lo necesario desde el stage de build
+# Copiar archivos necesarios del stage anterior
 COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/next.config.js ./
 
-# Instalar solo dependencias de producción
-RUN npm install --production
-
-# Variables de entorno (solo la que usas)
+# Variables de entorno (inyectadas por GitHub/Vercel)
 ENV DATABASE_URL=${DATABASE_URL}
 
-# Puerto que expondrá el contenedor
 EXPOSE 3000
 
-# Comando para iniciar la app
+# Iniciar la app en producción
 CMD ["npm", "start"]
