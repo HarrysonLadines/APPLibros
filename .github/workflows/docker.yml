@@ -26,12 +26,10 @@ jobs:
 
       - name: Set image name and version
         run: |
-          REPO_NAME=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
-          IMAGE_ID=ghcr.io/$REPO_NAME
-          VERSION=latest
+          IMAGE_ID="ghcr.io/${GITHUB_REPOSITORY,,}"  # convierte todo a minúscula
+          VERSION="latest"
           echo "IMAGE_ID=$IMAGE_ID"
           echo "VERSION=$VERSION"
-          echo "REPO_NAME=$REPO_NAME"
         shell: bash
 
       - name: Build Docker image
