@@ -26,19 +26,19 @@ jobs:
 
       - name: Build Docker image
         run: |
-          IMAGE_ID=ghcr.io/${{ github.repository,, }}
+          IMAGE_ID=ghcr.io/$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
           VERSION=latest
 
           echo "IMAGE_ID=$IMAGE_ID"
           echo "VERSION=$VERSION"
 
           docker build -t $IMAGE_ID:$VERSION .
-          docker tag $IMAGE_ID:$VERSION $IMAGE_ID:${{ github.sha }}
+          docker tag $IMAGE_ID:$VERSION $IMAGE_ID:${GITHUB_SHA}
 
       - name: Push Docker image
         run: |
-          IMAGE_ID=ghcr.io/${{ github.repository,, }}
+          IMAGE_ID=ghcr.io/$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
           VERSION=latest
 
           docker push $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:${{ github.sha }}
+          docker push $IMAGE_ID:${GITHUB_SHA}
