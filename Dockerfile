@@ -2,18 +2,15 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar y preparar dependencias
+# Copiar dependencias y el esquema de Prisma primero
 COPY package*.json ./
-RUN npm install
-
-# Copiar el esquema de Prisma
 COPY prisma ./prisma
 
-# Copiar todo el proyecto
-COPY . .
+# Instalar dependencias (esto ejecuta postinstall con prisma generate)
+RUN npm install
 
-# Generar el cliente de Prisma antes de build
-RUN npx prisma generate
+# Copiar el resto del proyecto
+COPY . .
 
 # Crear el build de Next.js
 RUN npm run build
@@ -22,7 +19,7 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Copiar archivos necesarios del stage anterior
+# Copiar solo lo necesario desde el builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
@@ -30,10 +27,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/next.config.js ./
 
-# Variables de entorno (inyectadas por GitHub/Vercel)
+# Variables de entorno
 ENV DATABASE_URL=${DATABASE_URL}
 
 EXPOSE 3000
-
-# Iniciar la app en producción
 CMD ["npm", "start"]
