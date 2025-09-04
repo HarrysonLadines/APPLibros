@@ -46,3 +46,4 @@ docker run -p 3000:3000 mi-plataforma-de-libros
 Recomendado usar multi-stage build en Dockerfile para reducir el tamaño de la imagen.
 
 
+console.log("Probando GitHub Action");
