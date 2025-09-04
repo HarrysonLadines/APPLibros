@@ -53,8 +53,9 @@ export default function ReseñaForm({ libroId, onNuevaReseña }: ReseñaFormProp
         onChange={(e) => setTexto(e.target.value)}
       />
       <div className="flex items-center gap-2">
-        <label>Calificación:</label>
+        <label htmlFor="calificacion">Calificación:</label>
         <select
+          id="calificacion"
           value={calificacion}
           onChange={(e) => setCalificacion(Number(e.target.value))}
           className="border p-1 rounded"

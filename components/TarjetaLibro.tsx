@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Libro } from '../types/libro';
 import Image from 'next/image';
+import React from "react";
 
 export default function TarjetaLibro({ libro }: { libro: Libro }) {
   const info = libro.volumeInfo;

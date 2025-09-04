@@ -1,4 +1,6 @@
 import { ReseñaConVotos } from '../types/reseña';
+import React from 'react'; 
+
 
 interface ListaReseñasProps {
   libroId: string;

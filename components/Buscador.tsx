@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import * as React from 'react';
 
 export default function Buscador({ onBuscar }: { onBuscar: (query: string) => void }) {
   const [query, setQuery] = useState('');
