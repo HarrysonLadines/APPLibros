@@ -25,12 +25,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set image name and version
+        id: vars
         run: |
-          IMAGE_ID="ghcr.io/${GITHUB_REPOSITORY,,}"  # convierte todo a minúscula
-          VERSION="latest"
-          echo "IMAGE_ID=$IMAGE_ID"
-          echo "VERSION=$VERSION"
-        shell: bash
+          REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_ID=ghcr.io/${REPO_NAME}" >> $GITHUB_ENV
+          echo "VERSION=latest" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
@@ -38,10 +37,8 @@ jobs:
             --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
             -t $IMAGE_ID:$VERSION .
           docker tag $IMAGE_ID:$VERSION $IMAGE_ID:${{ github.sha }}
-        shell: bash
 
       - name: Push Docker image
         run: |
           docker push $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:${{ github.sha }}
-        shell: bash
