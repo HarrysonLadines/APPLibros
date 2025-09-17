@@ -18,7 +18,7 @@ function DetalleLibro({ libro }: { libro: Libro }) {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/favoritos/${user.id}`);
+      const response = await fetch(`/api/favoritos/${user.id}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -53,7 +53,7 @@ function DetalleLibro({ libro }: { libro: Libro }) {
 
     try {
       const endpoint = isFavorite ? 'desmarcar' : 'marcar';
-      const response = await fetch(`http://localhost:3000/api/favoritos/${endpoint}`, {
+      const response = await fetch(`/api/favoritos/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
