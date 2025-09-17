@@ -1,156 +1,61 @@
-// tests/api/resenas.test.ts
-import handler from '@/pages/api/resenas/index'; // Ajusta según ruta real
-import { createMocks } from 'node-mocks-http';
-import mongoose, { Types } from 'mongoose';
-import { sign } from 'jsonwebtoken';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import connect from '@/lib/mongoose';
-import Resena from '../../../../../../models/Resena';
+import Voto from '../../../../../../models/Voto';
+import { Types } from 'mongoose';
+import { verify } from 'jsonwebtoken';
+import { votarResenaParamsSchema, votarResenaBodySchema} from '@/schemas/votoSchema';
 
-jest.setTimeout(30000);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  await connect();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' });
+  }
 
-describe('/api/resenas API', () => {
-  let userId: string;
-  let token: string;
-  let libroId: string;
-  let resenaId: string;
+  // Validar query (id)
+  const parsedQuery = votarResenaParamsSchema.safeParse(req.query);
+  if (!parsedQuery.success) {
+    return res.status(400).json({ error: parsedQuery.error.flatten() });
+  }
+  const { id } = parsedQuery.data;
 
-  beforeAll(async () => {
-    await connect();
+  // Validar body (tipo)
+  const parsedBody = votarResenaBodySchema.safeParse(req.body);
+  if (!parsedBody.success) {
+    return res.status(400).json({ error: parsedBody.error.flatten() });
+  }
+  const { tipo } = parsedBody.data;
 
-    // Crear usuario simulado (solo id)
-    userId = new Types.ObjectId().toString();
-    token = sign({ userId }, JWT_SECRET);
-
-    // Simular un libroId
-    libroId = new Types.ObjectId().toString();
-
-    // Crear una reseña de prueba para editar/eliminar después
-    const resena = new Resena({
-      contenido: 'Reseña inicial',
-      calificacion: 3,
-      libroId,
-      usuarioId: new Types.ObjectId(userId),
-      fechaCreacion: new Date(),
-    });
-    const saved = await resena.save();
-    resenaId = saved._id.toString();
-  });
-
-  afterAll(async () => {
-    // Limpiar reseñas creadas en la DB para no ensuciar tests
-    await Resena.deleteMany({ libroId });
-    await mongoose.connection.close();
-  });
-
-  test('POST /api/resenas crea una reseña con token', async () => {
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        contenido: 'Nueva reseña desde test',
-        calificacion: 4,
-        libroId,
-      },
-      cookies: {
-        token,
-      },
-    });
-
-    await handler(req, res);
-
-    expect(res._getStatusCode()).toBe(201);
-
-    const data = JSON.parse(res._getData());
-    expect(data.contenido).toBe('Nueva reseña desde test');
-    expect(data.calificacion).toBe(4);
-    expect(data.libroId).toBe(libroId);
-    expect(data.usuarioId).toBe(userId);
-  });
-
-  test('GET /api/resenas devuelve array con reseñas y votos', async () => {
-    const { req, res } = createMocks({
-      method: 'GET',
-      query: { libroId },
-    });
-
-    await handler(req, res);
-
-    expect(res._getStatusCode()).toBe(200);
-
-    const data = JSON.parse(res._getData());
-    expect(Array.isArray(data)).toBe(true);
-
-    // Si hay reseñas, debe tener likes y dislikes
-    if (data.length > 0) {
-      expect(data[0]).toHaveProperty('likes');
-      expect(data[0]).toHaveProperty('dislikes');
-      expect(data[0]).toHaveProperty('contenido');
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: 'No estás autenticado' });
     }
-  });
 
-  test('PUT /api/resenas edita una reseña si es el autor', async () => {
-    const { req, res } = createMocks({
-      method: 'PUT',
-      body: {
-        resenaId,
-        contenido: 'Reseña editada desde test',
-        calificacion: 5,
-      },
-      cookies: {
-        token,
-      },
-    });
+    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const { userId } = decoded;
 
-    await handler(req, res);
-
-    expect(res._getStatusCode()).toBe(200);
-
-    const data = JSON.parse(res._getData());
-    expect(data.contenido).toBe('Reseña editada desde test');
-    expect(data.calificacion).toBe(5);
-  });
-
-  test('DELETE /api/resenas elimina una reseña si es el autor', async () => {
-    // Primero crear una reseña para eliminar
-    const resena = new Resena({
-      contenido: 'Reseña a eliminar',
-      calificacion: 1,
-      libroId,
+    const votoExistente = await Voto.findOne({
+      resenaId: new Types.ObjectId(id),
       usuarioId: new Types.ObjectId(userId),
-      fechaCreacion: new Date(),
-    });
-    const saved = await resena.save();
-
-    const { req, res } = createMocks({
-      method: 'DELETE',
-      query: { id: saved._id.toString() },
-      cookies: {
-        token,
-      },
     });
 
-    await handler(req, res);
+    if (votoExistente) {
+      return res.status(400).json({ error: 'Ya has votado por esta reseña' });
+    }
 
-    expect(res._getStatusCode()).toBe(200);
-    const data = JSON.parse(res._getData());
-    expect(data.message).toBe('Reseña eliminada correctamente');
-  });
-
-  test('POST /api/resenas rechaza sin token', async () => {
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        contenido: 'No autorizado',
-        calificacion: 3,
-        libroId,
-      },
+    const nuevoVoto = new Voto({
+      resenaId: new Types.ObjectId(id),
+      tipo,
+      usuarioId: new Types.ObjectId(userId),
     });
 
-    await handler(req, res);
+    await nuevoVoto.save();
 
-    expect(res._getStatusCode()).toBe(401);
-    const data = JSON.parse(res._getData());
-    expect(data.error).toBe('No estás autenticado');
-  });
-});
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('Error al guardar voto:', error);
+    return res.status(500).json({ error: error || 'Error interno' });
+  }
+}
+
