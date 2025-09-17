@@ -13,19 +13,19 @@ export default function HeaderAuth() {
 
         {/* Navegación para usuarios no autenticados */}
         <div className="flex space-x-4">
-          <Link href="/login">
+          <Link href="/login" legacyBehavior>
             <button className="px-4 py-1 rounded-md border border-white hover:bg-white hover:text-black transition-colors duration-200">
               Iniciar sesión
             </button>
           </Link>
 
-          <Link href="/register">
+          <Link href="/register" legacyBehavior>
             <button className="px-4 py-1 rounded-md bg-red-500 hover:bg-red-600 transition-colors duration-200">
               Registrarse
             </button>
           </Link>
 
-          <Link href="/">
+          <Link href="/" legacyBehavior>
             <button className="px-4 py-1 rounded-md bg-gray-600 hover:bg-gray-700 transition-colors duration-200">
               🏠
             </button>

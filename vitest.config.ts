@@ -12,8 +12,8 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/setupTests.ts',
     include: [
-      "tests/**/*.{test,spec}.{js,ts,jsx,tsx}", // busca en /tests
-      "src/**/*.{test,spec}.{js,ts,jsx,tsx}"    // busca en /src también
+      "tests/**/*.{test,spec}.{js,ts,jsx,tsx}",
+      "src/**/*.{test,spec}.{js,ts,jsx,tsx}"   
     ],
   },
 })

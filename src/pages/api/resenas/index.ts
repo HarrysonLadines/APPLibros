@@ -4,13 +4,12 @@ import Resena from '../../../../models/Resena';
 import Usuario from '../../../../models/Usuario'; 
 import Voto from '../../../../models/Voto';
 import { Types } from 'mongoose';
-//import { IResena } from '../../../../models/Resena';  
-import { VotoFrontend } from '@/types/voto'; 
 import mongoose from 'mongoose';
 import { verify } from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
-//import { Reseña, ReseñaConVotos } from '@/types/reseña';
+import { crearResenaSchema,  editarResenaSchema, eliminarResenaQuerySchema, obtenerResenasQuerySchema, } from '@/schemas/resenaSchema';
 
+// Interfaces para tipar datos usados internamente
 interface ReseñaFrontend {
   _id: string;
   calificacion: number;
@@ -46,7 +45,7 @@ type VotoPoblado = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Conectar a la base de datos MongoDB
+  // Intentar conectar a la base de datos MongoDB
   try {
     await connect();
   } catch (error) {
@@ -55,57 +54,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { method } = req;
 
-  // -------------- GET - Obtener reseñas y votos para un libro --------------
+  // ----------------- GET: Obtener reseñas y votos para un libro -----------------
   if (method === 'GET') {
-    const libroId = req.query.libroId as string;
-    if (!libroId) {
-      return res.status(400).json({ error: 'Falta libroId' });
-    }
+    const parsedQuery = obtenerResenasQuerySchema.safeParse(req.query);
+
+  if (!parsedQuery.success) {
+    return res.status(400).json({ error: parsedQuery.error.flatten() });
+  }
+
+  const { libroId } = parsedQuery.data;
+
 
     try {
-      // Registrar modelo Usuario si no está registrado (para evitar errores de mongoose)
+      // Registrar modelo Usuario si no está registrado para evitar errores de Mongoose
       if (!mongoose.models.Usuario) {
         mongoose.model('Usuario', Usuario.schema);
       }
 
-      // Obtener reseñas del libro, ordenadas por fecha (más recientes primero), con usuario poblado solo con el nombre
+      // Obtener reseñas del libro, ordenadas por fecha (más recientes primero)
+      // y con el usuario poblado solo con el nombre
       const reseñasRaw = await Resena.find({ libroId })
-  .sort({ fechaCreacion: -1 })
-  .populate('usuarioId', 'nombre')
-  .lean()
-  .exec() as unknown as ResenaConUsuario[];
+        .sort({ fechaCreacion: -1 })
+        .populate('usuarioId', 'nombre')
+        .lean()
+        .exec() as unknown as ResenaConUsuario[];
 
-
-      // Mapear las reseñas para devolver solo lo necesario y convertir ObjectId a string en usuarioId
+      // Mapear reseñas para convertir ObjectId a string y devolver solo lo necesario
       const reseñasFrontend: ReseñaFrontend[] = reseñasRaw.map((r) => ({
-  _id: r._id.toString(),
-  contenido: r.contenido,
-  calificacion: r.calificacion,
-  fechaCreacion: r.fechaCreacion,
-  libroId: r.libroId,
-  usuarioId: r.usuarioId ? r.usuarioId._id.toString() : null,
-}));
+        _id: r._id.toString(),
+        contenido: r.contenido,
+        calificacion: r.calificacion,
+        fechaCreacion: r.fechaCreacion,
+        libroId: r.libroId,
+        usuarioId: r.usuarioId ? r.usuarioId._id.toString() : null,
+      }));
 
-      // Extraer los IDs de las reseñas para consulta de votos
+      // Extraer IDs de reseñas para consultar votos relacionados
       const reseñaIds = reseñasFrontend.map((r) => r._id);
 
-      // Obtener votos de las reseñas con usuario poblado (nombre)
+      // Obtener votos de las reseñas, poblados con usuario (nombre)
       const votosRaw = await Voto.find({ resenaId: { $in: reseñaIds } })
         .populate('usuarioId', 'nombre')
         .lean()
         .exec() as unknown as VotoPoblado[];
 
-      // Mapear votos para frontend: convertir ObjectId a string
-      const votosFrontend: VotoFrontend[] = votosRaw.map((v) => ({
+      // Mapear votos para frontend, convirtiendo ObjectId a string
+      const votosFrontend = votosRaw.map((v) => ({
         _id: v._id.toString(),
         tipo: v.tipo,
         reseñaId: v.resenaId.toString(),
         usuarioId: v.usuarioId ? v.usuarioId._id.toString() : undefined,
       }));
 
-      // Asociar votos con cada reseña, contando likes y dislikes
+      // Asociar votos con cada reseña y contar likes y dislikes
       const data = reseñasFrontend.map((r) => {
-        const votosDeReseña = votosFrontend.filter((v) => v.reseñaId === r._id.toString());
+        const votosDeReseña = votosFrontend.filter((v) => v.reseñaId === r._id);
         const likes = votosDeReseña.filter((v) => v.tipo === 'UP').length;
         const dislikes = votosDeReseña.filter((v) => v.tipo === 'DOWN').length;
 
@@ -119,10 +122,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
       });
 
-      // Ordenar las reseñas según la cantidad de likes (descendente)
+      // Ordenar reseñas según cantidad de likes (descendente)
       data.sort((a, b) => b.likes - a.likes);
 
-      // Enviar la respuesta JSON con las reseñas y votos
+      // Enviar las reseñas con votos al frontend
       return res.status(200).json(data);
 
     } catch (error) {
@@ -131,21 +134,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // -------------- DELETE - Eliminar una reseña --------------
+  // ----------------- DELETE: Eliminar una reseña -----------------
   else if (method === 'DELETE') {
-    const { token } = req.cookies; // Token JWT
-    const { id } = req.query;      // Id de la reseña a eliminar
+    const { token } = req.cookies;   // Token JWT
+    const parsedQuery = eliminarResenaQuerySchema.safeParse(req.query);
 
-    if (!id) {
-      return res.status(400).json({ error: 'ID de reseña no proporcionado' });
+    if (!parsedQuery.success) {
+      return res.status(400).json({ error: parsedQuery.error.flatten() });
     }
+
+    const { id } = parsedQuery.data;
+
 
     if (!token) {
       return res.status(401).json({ error: 'No estás autenticado' });
     }
 
     try {
-      // Verificar token y obtener userId
+      // Verificar token y extraer userId
       const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
       const { userId } = decoded;
 
@@ -155,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: 'Reseña no encontrada' });
       }
 
-      // Verificar que el usuario es el autor
+      // Verificar que el usuario es el autor de la reseña
       if (reseña.usuarioId.toString() !== userId) {
         return res.status(403).json({ error: 'No tienes permisos para eliminar esta reseña' });
       }
@@ -170,14 +176,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // -------------- POST - Crear una nueva reseña --------------
+  // ----------------- POST: Crear una nueva reseña -----------------
   else if (method === 'POST') {
-    const { contenido, calificacion, libroId } = req.body;
+    const parsed = crearResenaSchema.safeParse(req.body);
 
-    // Validar datos de entrada
-    if (!contenido || !calificacion || !libroId) {
-      return res.status(400).json({ error: 'Faltan datos necesarios' });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
     }
+
+    const { contenido, calificacion, libroId } = parsed.data;
+
 
     const { token } = req.cookies;
     if (!token) {
@@ -185,11 +193,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      // Validar token y extraer userId
+      // Verificar token y extraer userId
       const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
       const { userId } = decoded;
 
-      // Crear y guardar la reseña nueva
+      // Crear nueva reseña y guardarla en BD
       const nuevaReseña = new Resena({
         contenido,
         calificacion,
@@ -206,37 +214,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // -------------- PUT - Editar una reseña existente --------------
+  // ----------------- PUT: Editar una reseña existente -----------------
   else if (method === 'PUT') {
     const { token } = req.cookies;
-    const { resenaId, contenido, calificacion } = req.body;
+    const parsed = editarResenaSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const { resenaId, contenido, calificacion } = parsed.data;
+
 
     if (!token) {
       return res.status(401).json({ error: 'No estás autenticado' });
     }
 
     try {
-      // Verificar token y obtener userId
+      // Verificar token y extraer userId
       const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
       const { userId } = decoded;
 
-      // Buscar reseña a editar
+      // Buscar la reseña a editar
       const reseña = await Resena.findById(resenaId);
       if (!reseña) {
         return res.status(404).json({ error: 'Reseña no encontrada' });
       }
 
-      // Validar que el usuario sea el autor
+      // Validar que el usuario sea el autor de la reseña
       if (reseña.usuarioId.toString() !== userId) {
         return res.status(403).json({ error: 'No tienes permisos para editar esta reseña' });
       }
 
-      // Actualizar campos
+      // Actualizar campos solo si vienen nuevos datos
       reseña.contenido = contenido || reseña.contenido;
       reseña.calificacion = calificacion || reseña.calificacion;
 
       // Guardar cambios
       const updatedReseña = await reseña.save();
+
       return res.status(200).json(updatedReseña);
 
     } catch (err) {
@@ -244,7 +260,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // -------------- Método no permitido --------------
+  // ----------------- Método no permitido -----------------
   else {
     return res.status(405).json({ error: 'Método no permitido' });
   }

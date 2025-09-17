@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
+import dotenv from 'dotenv'
+
+
+dotenv.config()
 
 global.alert = vi.fn()
 
@@ -20,7 +24,7 @@ global.fetch = vi.fn((input: RequestInfo | URL) => {
       : input instanceof URL
         ? input.toString()
         : input.url,
-    clone: () => mockedResponse,
+    clone: () => mockedResponse as Response,
     body: null,
     bodyUsed: false,
   }

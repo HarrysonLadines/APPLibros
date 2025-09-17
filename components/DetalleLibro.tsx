@@ -32,9 +32,10 @@ function DetalleLibro({ libro }: { libro: Libro }) {
       const favoritos = await response.json();
       const isFav = favoritos.some((libroId: string) => libroId === libro.id);
       setIsFavorite(isFav);
-    } catch (error) {
-      setError('Error al obtener los favoritos');
-    } finally {
+    } catch {
+        setError('Error al obtener los favoritos');
+      }
+      finally {
       setIsLoading(false);
     }
   }, [user, libro.id]);
@@ -64,7 +65,7 @@ function DetalleLibro({ libro }: { libro: Libro }) {
       if (!response.ok) throw new Error('Error al actualizar favoritos');
 
       setIsFavorite(!isFavorite);
-    } catch (error) {
+    } catch {
       setError('Error al actualizar el favorito');
     }
   };

@@ -1,12 +1,12 @@
 import { Types } from "mongoose";
 
 export interface Reseña {
-  _id: Types.ObjectId;  // Cambiado a Types.ObjectId
+  _id: Types.ObjectId;  
   calificacion: number;
   contenido: string;
   fechaCreacion: Date; 
   libroId: string;
-  usuarioId?: Types.ObjectId;  // Cambiado a Types.ObjectId
+  usuarioId?: Types.ObjectId;  
 }
 
 export interface NuevaReseña {
@@ -14,7 +14,7 @@ export interface NuevaReseña {
   contenido: string;
   calificacion: number;
   fechaCreacion?: Date;
-  usuarioId: string;  // Cambiado a string si es que esperas un string en la base de datos
+  usuarioId: string;  
 }
 
 export interface ReseñaConVotos extends Reseña {
@@ -28,5 +28,5 @@ export interface ResenaLean {
   contenido: string;
   fechaCreacion: Date;
   libroId: string;
-  usuarioId?: Types.ObjectId;  // Cambiado a Types.ObjectId
+  usuarioId?: Types.ObjectId; 
 }

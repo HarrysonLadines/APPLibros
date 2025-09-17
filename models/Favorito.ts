@@ -1,4 +1,3 @@
-// models/Favorito.ts
 import mongoose, { Schema, Document, model } from 'mongoose';
 
 export interface IFavorito extends Document {

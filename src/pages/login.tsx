@@ -6,46 +6,60 @@ import jwt from 'jsonwebtoken';
 import HeaderAuth from '../../components/HeaderAuth';
 
 export default function LoginPage() {
+  // Estados para controlar los inputs del formulario y errores
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();  // Aquí tomamos el método login de AuthContext
-  const router = useRouter();  // Usamos useRouter para redirigir después del login
 
+  // Contexto de autenticación para usar el método login
+  const { login } = useAuth();
+
+  // Router para redireccionar después del login exitoso
+  const router = useRouter();
+
+  // Función que maneja el submit del formulario de login
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();  // Evitar recarga de página
 
     try {
-      // Hacer la petición al backend para loguear al usuario
+      // Petición al endpoint de login en el backend con email y password
       const response = await axios.post('/api/auth/login', { email, password });
-      console.log(response.data.message);  // Solo para depuración
 
-      // Obtener el token de la respuesta (si se incluye en la respuesta)
+      // Extraemos el token JWT recibido en la respuesta
       const { token } = response.data;
 
-      // Decodificamos el token (si es necesario) y almacenamos la información del usuario en el contexto
+      // Decodificamos el token para obtener datos del usuario
       const decoded = jwt.decode(token) as { userId: string; email: string };
-      login({ id: decoded.userId, email: decoded.email });  // Actualizamos el contexto
 
-      // Redirigimos al usuario a la página principal
-      router.push('/');  // Redireccionamos a la página principal (o donde quieras)
+      // Actualizamos el contexto de autenticación con los datos del usuario
+      login({ id: decoded.userId, email: decoded.email });
+
+      // Redirigimos a la página principal tras login exitoso
+      router.push('/');
     } catch (err) {
-      setError('Credenciales incorrectas' + err); 
+      setError('Credenciales incorrectas. ' + err);
     }
   };
 
   return (
     <div className="min-h-screen bg-black-100">
-      {/* Header estático que no se desplaza */}
+      {/* Header fijo para páginas de autenticación */}
       <HeaderAuth />
 
-      {/* Contenedor para centrar el formulario */}
+      {/* Contenedor centrado para el formulario */}
       <div className="flex items-center justify-center min-h-screen pt-0">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full sm:w-96">
-          <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">Iniciar sesión</h1>
+          <h1 className="text-2xl font-semibold text-center mb-6 text-gray-800">
+            Iniciar sesión
+          </h1>
+
+          {/* Formulario de login */}
           <form onSubmit={handleLogin}>
+            {/* Campo email */}
             <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
@@ -55,8 +69,12 @@ export default function LoginPage() {
                 required
               />
             </div>
+
+            {/* Campo contraseña */}
             <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Contraseña
+              </label>
               <input
                 type="password"
                 id="password"

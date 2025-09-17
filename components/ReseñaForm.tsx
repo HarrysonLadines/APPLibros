@@ -29,12 +29,11 @@ export default function ReseñaForm({
     }
   }, [router.query, libroId]);
 
-  // Cargar datos si estamos editando
   useEffect(() => {
     if (reseñaEditar) {
       setTexto(reseñaEditar.contenido);
       setCalificacion(reseñaEditar.calificacion);
-      setLibroId(reseñaEditar.libroId); // Asegurar libroId en edición
+      setLibroId(reseñaEditar.libroId); 
     }
   }, [reseñaEditar]);
 
@@ -88,7 +87,7 @@ export default function ReseñaForm({
 
       onNuevaReseña(data);
 
-      // Reset solo si no es edición para evitar borrar contenido antes de cerrar modal o similar
+      // Reset solo si no es edición
       if (!reseñaEditar) {
         setTexto("");
         setCalificacion(0);

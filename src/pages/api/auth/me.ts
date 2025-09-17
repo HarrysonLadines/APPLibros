@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
-      await connect(); // Conectamos a MongoDB con Mongoose
+      await connect(); 
 
       const user = await Usuario.findById(decoded.userId);
       if (!user) {
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       return res.status(200).json({
         user: {
-          id: user._id.toString(), // 👈 esto es clave
+          id: user._id.toString(), 
           email: user.email,
           nombre: user.nombre,
         },

@@ -2,24 +2,21 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getCookie } from '@/utils/cookies';
 import { NextApiRequest } from 'next';
 
-export const authenticate = (req: NextApiRequest) => {
-  // Pasar `req` a `getCookie` para obtener el token desde las cookies en el servidor
+interface DecodedToken extends JwtPayload {
+  userId: string;
+}
+
+export const authenticate = (req: NextApiRequest): DecodedToken => {
   const token = getCookie('token', req);
-  console.log("Token recibido en el backend:", token);
 
   if (!token) {
-    throw new Error('No token proporcionado');
+    throw new Error('No se proporcionó token');
   }
 
   try {
-    // Verificar el token usando el secret y hacer un type casting del decoded
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload & { userId: string }; 
-
-    console.log("Token decodificado en AuthMiddleware:", decoded); // Aquí agregamos un log
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
     return decoded;
-  } catch (err) {
-    console.error('Error al verificar el token:', err); // Aquí añadimos un log de error
+  } catch {
     throw new Error('Token inválido o expirado');
   }
 };

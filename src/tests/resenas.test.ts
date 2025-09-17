@@ -1,12 +1,10 @@
-// tests/api/resenas.test.ts
-import handler from '@/pages/api/resenas/index'; // Ajusta según ruta real
+import { describe, test, expect, beforeAll, afterAll} from 'vitest';
+import handler from '@/pages/api/resenas/index';
 import { createMocks } from 'node-mocks-http';
 import mongoose, { Types } from 'mongoose';
 import { sign } from 'jsonwebtoken';
 import connect from '@/lib/mongoose';
-import Resena from '../../../../../../models/Resena';
-
-jest.setTimeout(30000);
+import Resena from '../../models/Resena';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
@@ -19,14 +17,11 @@ describe('/api/resenas API', () => {
   beforeAll(async () => {
     await connect();
 
-    // Crear usuario simulado (solo id)
     userId = new Types.ObjectId().toString();
     token = sign({ userId }, JWT_SECRET);
 
-    // Simular un libroId
     libroId = new Types.ObjectId().toString();
 
-    // Crear una reseña de prueba para editar/eliminar después
     const resena = new Resena({
       contenido: 'Reseña inicial',
       calificacion: 3,
@@ -39,7 +34,6 @@ describe('/api/resenas API', () => {
   });
 
   afterAll(async () => {
-    // Limpiar reseñas creadas en la DB para no ensuciar tests
     await Resena.deleteMany({ libroId });
     await mongoose.connection.close();
   });
@@ -81,7 +75,6 @@ describe('/api/resenas API', () => {
     const data = JSON.parse(res._getData());
     expect(Array.isArray(data)).toBe(true);
 
-    // Si hay reseñas, debe tener likes y dislikes
     if (data.length > 0) {
       expect(data[0]).toHaveProperty('likes');
       expect(data[0]).toHaveProperty('dislikes');
@@ -112,7 +105,6 @@ describe('/api/resenas API', () => {
   });
 
   test('DELETE /api/resenas elimina una reseña si es el autor', async () => {
-    // Primero crear una reseña para eliminar
     const resena = new Resena({
       contenido: 'Reseña a eliminar',
       calificacion: 1,

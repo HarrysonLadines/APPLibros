@@ -1,6 +1,5 @@
 import { NextApiRequest } from 'next';
 
-// Esta función maneja tanto el frontend como el backend
 export const getCookie = (name: string, req?: NextApiRequest) => {
   // Si estamos en el frontend (navegador), usar document.cookie
   if (typeof window !== "undefined") {

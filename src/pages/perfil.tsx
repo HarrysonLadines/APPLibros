@@ -58,7 +58,7 @@ const Perfil = () => {
         const favoritosRes = await axios.get(`/api/favoritos/${user.id}`, { withCredentials: true });
         setFavoritos(favoritosRes.data);
 
-        // Extraer IDs únicos de libros (de reseñas y favoritos)
+        // Extraer IDs únicos de libros 
         const idsResenas: string[] = resenasRes.data.map((resena: IResena) => resena.libroId);
         const idsFavoritos: string[] = favoritosRes.data.map((libro: Favorito) =>
           typeof libro === 'string' ? libro : libro.id
@@ -114,7 +114,7 @@ const Perfil = () => {
     <div className="w-full max-w-6xl mx-auto p-6 relative">
       <button
         onClick={() => router.push('/')}
-        className="absolute top-4 left-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-blue-600"
+        className="absolute top-4 left-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
       >
         Volver
       </button>
@@ -132,12 +132,6 @@ const Perfil = () => {
         ) : (
           <p>Cargando usuario...</p>
         )}
-        <button
-          onClick={() => router.push('/login')}
-          className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-        >
-          Cerrar sesión
-        </button>
       </div>
 
       {/* Historial de Reseñas */}

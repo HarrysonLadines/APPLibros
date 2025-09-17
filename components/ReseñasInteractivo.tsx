@@ -28,7 +28,7 @@ export default function ReseñasInteractivo({ libroId, usuarioId }: ReseñasInte
     fetchReseñas();
   }, [libroId]);
 
-  // Calcular promedio de calificación (redondeo a 1 decimal)
+  // Calcular promedio de calificación
   const promedio =
     reseñas.length > 0
       ? reseñas.reduce((acc, r) => acc + r.calificacion, 0) / reseñas.length
@@ -39,7 +39,7 @@ export default function ReseñasInteractivo({ libroId, usuarioId }: ReseñasInte
     setReseñas(prev => {
       const existe = prev.find(r => r._id === nuevaReseña._id);
       if (existe) {
-        // Si ya existe, actualizamos esa reseña (caso edición)
+        // Si ya existe, actualizamos esa reseña
         return prev.map(r => (r._id === nuevaReseña._id ? nuevaReseña : r));
       } else {
         // Si es nueva, la agregamos al principio

@@ -1,5 +1,3 @@
-// models/Resena.ts
-
 import mongoose, { Schema, Document, model } from 'mongoose';
 import { Types } from 'mongoose'; 
 

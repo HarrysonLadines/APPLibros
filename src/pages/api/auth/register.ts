@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Usuario from '../../../../models/Usuario';
 import connect from '../../../lib/mongoose';
+import { registerSchema } from '@/schemas/authSchema';
 
 type ResponseData = {
   message: string;
@@ -9,13 +10,16 @@ type ResponseData = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseData>) {
   if (req.method === 'POST') {
-    const { email, password, nombre } = req.body;
+    const result = registerSchema.safeParse(req.body);
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email y contraseña son requeridos' });
+    if (!result.success) {
+      const errorMessages = result.error.issues.map(issue => issue.message).join(', ');
+      return res.status(400).json({ message: `Datos inválidos: ${errorMessages}` });
     }
 
-    await connect(); // Conectamos a MongoDB con Mongoose
+    const { email, password, nombre } = result.data;
+
+    await connect(); 
 
     // Verificar si el usuario ya existe
     const existingUser = await Usuario.findOne({ email });
@@ -23,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(400).json({ message: 'Usuario ya existe' });
     }
 
-    // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Crear el nuevo usuario

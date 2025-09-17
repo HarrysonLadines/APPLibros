@@ -10,41 +10,38 @@ interface AuthContextProps {
   children: ReactNode;
 }
 
+interface User {
+  id: string;
+  email: string;
+  nombre?: string;
+}
+
 interface AuthContextType {
-  user: { id: string; email: string; nombre?: string } | null;
-  login: (userData: { id: string; email: string; nombre?: string }) => void;
+  user: User | null;
+  login: (userData: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthContextProps> = ({ children }) => {
-  const [user, setUser] = useState<{
-    id: string;
-    email: string;
-    nombre?: string;
-  } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    console.log('[AuthProvider] Montando AuthProvider...');
-
     const fetchUser = async () => {
       try {
         const res = await fetch('/api/auth/me', {
           method: 'GET',
-          credentials: 'include', // 👈 esto envía la cookie
+          credentials: 'include',
         });
 
         if (res.ok) {
           const data = await res.json();
-          console.log('[AuthProvider] Usuario recibido desde backend:', data.user);
           setUser(data.user);
         } else {
-          console.warn('[AuthProvider] No autenticado o token inválido');
           setUser(null);
         }
-      } catch (err) {
-        console.error('[AuthProvider] Error al obtener usuario:', err);
+      } catch  {
         setUser(null);
       }
     };
@@ -52,19 +49,13 @@ export const AuthProvider: React.FC<AuthContextProps> = ({ children }) => {
     fetchUser();
   }, []);
 
-  const login = (userData: {
-    id: string;
-    email: string;
-    nombre?: string;
-  }) => {
-    console.log('[AuthProvider] Login: Actualizando usuario en contexto:', userData);
+  const login = (userData: User) => {
     setUser(userData);
   };
 
   const logout = () => {
-    console.log('[AuthProvider] Logout: Limpiando usuario del contexto');
     setUser(null);
-    document.cookie = 'token=; Max-Age=0; path=/'; // Eliminar la cookie manualmente
+    document.cookie = 'token=; Max-Age=0; path=/'; 
   };
 
   return (
@@ -74,7 +65,7 @@ export const AuthProvider: React.FC<AuthContextProps> = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
